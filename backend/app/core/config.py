@@ -58,6 +58,25 @@ class Settings(BaseSettings):
     # Reject events whose signature timestamp is older than this (replay guard).
     STRIPE_WEBHOOK_TOLERANCE_SECONDS: int = 300
 
+    # ── Redis + Celery (Phase 7 — alert sweeps & operator digest) ───────────
+    # The admin service's OWN Redis/Celery (not the tenant app's). The FastAPI
+    # process never needs the broker — only the worker/beat do — so the API
+    # boots fine with these at defaults.
+    REDIS_URL: str = "redis://localhost:6379/0"
+    CELERY_BROKER_URL: Optional[str] = None  # defaults to REDIS_URL
+    CELERY_RESULT_BACKEND: Optional[str] = None  # defaults to REDIS_URL
+    # How often the alert sweep runs (minutes) and when the daily digest fires.
+    ALERT_SWEEP_INTERVAL_MINUTES: int = 15
+    DIGEST_HOUR_UTC: int = 13
+
+    @property
+    def celery_broker(self) -> str:
+        return self.CELERY_BROKER_URL or self.REDIS_URL
+
+    @property
+    def celery_backend(self) -> str:
+        return self.CELERY_RESULT_BACKEND or self.REDIS_URL
+
     @property
     def is_production(self) -> bool:
         return self.APP_ENV.lower() in {"production", "staging"}

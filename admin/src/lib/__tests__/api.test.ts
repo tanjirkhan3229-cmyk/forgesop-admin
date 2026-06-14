@@ -97,4 +97,32 @@ describe('api client', () => {
     expect(res.invoices[0].number).toBe('F-0001')
     expect(fetchMock.mock.calls[0][0]).toContain('/v1/billing/invoices?workspace_id=w1')
   })
+
+  it('GETs platform settings', async () => {
+    setToken('t')
+    const fetchMock = mockFetch(200, {
+      alert_thresholds: { signup_drop_pct: 50 },
+      digest: { enabled: true, frequency: 'weekly' },
+      recipients: [],
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await api.settings()
+    expect(res.digest.frequency).toBe('weekly')
+    expect(fetchMock.mock.calls[0][0]).toContain('/v1/settings')
+  })
+
+  it('PUTs a partial settings update', async () => {
+    setToken('t')
+    const fetchMock = mockFetch(200, { recipients: ['ops@forgesop.app'] })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await api.updateSettings({ recipients: ['ops@forgesop.app'] })
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toContain('/v1/settings')
+    expect((init as RequestInit).method).toBe('PUT')
+    expect(JSON.parse((init as RequestInit).body as string)).toEqual({
+      recipients: ['ops@forgesop.app'],
+    })
+  })
 })

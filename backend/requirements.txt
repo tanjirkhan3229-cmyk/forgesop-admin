@@ -12,6 +12,8 @@ email-validator>=2.0     # pydantic EmailStr
 PyJWT[crypto]>=2.8       # operator-token (RS256/ES256) verification
 stripe>=8.0              # Phase 6 billing: invoices fetch (lazy import; webhook
                          # signature verification is stdlib-only — see billing_service)
+celery>=5.3             # Phase 7: alert-sweep + digest beat schedule (admin's own)
+redis>=5.0              # Phase 7: Celery broker/result backend
 
 # ── tests ────────────────────────────────────────────────────────────
 pytest>=8.0

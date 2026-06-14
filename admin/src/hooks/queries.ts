@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   api,
   type PlanInput,
+  type SettingsPatch,
   type UserQuery,
   type WorkspacePatch,
   type WorkspaceQuery,
@@ -42,6 +43,18 @@ export function useWorkspaceInvoices(id: string | null) {
     queryKey: ['invoices', id],
     queryFn: () => api.invoices(id as string),
     enabled: !!id,
+  })
+}
+
+export function useSettings() {
+  return useQuery({ queryKey: ['settings'], queryFn: api.settings })
+}
+
+export function useUpdateSettings() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: SettingsPatch) => api.updateSettings(body),
+    onSuccess: (data) => qc.setQueryData(['settings'], data),
   })
 }
 

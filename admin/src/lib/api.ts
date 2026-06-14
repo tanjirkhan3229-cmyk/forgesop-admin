@@ -143,6 +143,32 @@ export interface WorkspacePatch {
   limits?: Record<string, number | null>
 }
 
+export interface AlertThresholds {
+  signup_drop_pct: number
+  signup_window_days: number
+  signup_min_baseline: number
+  over_seat_limit_enabled: boolean
+  error_rate_pct: number
+  alert_cooldown_hours: number
+}
+
+export interface DigestConfig {
+  enabled: boolean
+  frequency: 'daily' | 'weekly'
+}
+
+export interface PlatformSettings {
+  alert_thresholds: AlertThresholds
+  digest: DigestConfig
+  recipients: string[]
+}
+
+export interface SettingsPatch {
+  alert_thresholds?: Partial<AlertThresholds>
+  digest?: Partial<DigestConfig>
+  recipients?: string[]
+}
+
 export class AuthError extends Error {}
 
 type QueryParams = Record<string, string | number | undefined | null>
@@ -213,4 +239,8 @@ export const api = {
     }),
   invoices: (workspaceId: string) =>
     request<WorkspaceInvoices>(`/v1/billing/invoices${qs({ workspace_id: workspaceId })}`),
+
+  settings: () => request<PlatformSettings>('/v1/settings'),
+  updateSettings: (body: SettingsPatch) =>
+    request<PlatformSettings>('/v1/settings', { method: 'PUT', body: JSON.stringify(body) }),
 }

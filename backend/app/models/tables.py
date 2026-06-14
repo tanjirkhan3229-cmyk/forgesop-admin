@@ -89,6 +89,18 @@ plans = Table(
     Column("updated_at", DateTime(timezone=True)),
 )
 
+# Operator-tunable settings (Phase 7): alert thresholds, digest config, and the
+# notification recipient list — one row per key, value is free-form jsonb. The
+# reserved `_alert_state` key holds internal alert-cooldown bookkeeping and is
+# never surfaced through the settings API.
+platform_settings = Table(
+    "platform_settings",
+    metadata,
+    Column("key", Text, primary_key=True),
+    Column("value", JSONB_T, nullable=False, default=dict),
+    Column("updated_at", DateTime(timezone=True)),
+)
+
 # Per-workspace plan assignment + one-off overrides. The *effect* of a plan is
 # applied to public.workspaces.feature_* by plan_service.apply_plan; this table
 # records WHICH plan a workspace is on (operator-owned).
