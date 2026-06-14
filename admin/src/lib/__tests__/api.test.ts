@@ -71,4 +71,30 @@ describe('api client', () => {
     expect(url).toContain('/v1/plans')
     expect((init as RequestInit).method).toBe('POST')
   })
+
+  it('PATCHes a plan with a stripe_price_id (billing mapping)', async () => {
+    setToken('t')
+    const fetchMock = mockFetch(200, { key: 'pro', stripe_price_id: 'price_123' })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await api.updatePlan('pro', { stripe_price_id: 'price_123' })
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toContain('/v1/plans/pro')
+    expect((init as RequestInit).method).toBe('PATCH')
+    expect(JSON.parse((init as RequestInit).body as string)).toEqual({ stripe_price_id: 'price_123' })
+  })
+
+  it('fetches read-only invoices for a workspace', async () => {
+    setToken('t')
+    const fetchMock = mockFetch(200, {
+      customer_id: 'cus_inv',
+      invoices: [{ id: 'in_1', number: 'F-0001', status: 'paid', amount_due: 4900 }],
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await api.invoices('w1')
+    expect(res.customer_id).toBe('cus_inv')
+    expect(res.invoices[0].number).toBe('F-0001')
+    expect(fetchMock.mock.calls[0][0]).toContain('/v1/billing/invoices?workspace_id=w1')
+  })
 })

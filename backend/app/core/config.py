@@ -45,6 +45,19 @@ class Settings(BaseSettings):
     # CORS — the admin SPA origin (e.g. https://admin.forgesop.app).
     ADMIN_ORIGIN: str = "http://localhost:5173"
 
+    # ── Stripe billing (Phase 6 — optional) ─────────────────────────────────
+    # Billing is OFF until both are set. The webhook verifies every payload's
+    # `Stripe-Signature` against STRIPE_WEBHOOK_SECRET (an absent secret means
+    # no event can be accepted), and the read-only invoices view calls the
+    # Stripe API with STRIPE_API_KEY. The key lives only in this service's
+    # environment — never in any browser, never logged. Stripe maps a
+    # subscribed `stripe_price_id → platform.plans.key` and the existing
+    # `plan_service.apply_plan` does the reconciliation, unchanged.
+    STRIPE_API_KEY: Optional[str] = None
+    STRIPE_WEBHOOK_SECRET: Optional[str] = None
+    # Reject events whose signature timestamp is older than this (replay guard).
+    STRIPE_WEBHOOK_TOLERANCE_SECONDS: int = 300
+
     @property
     def is_production(self) -> bool:
         return self.APP_ENV.lower() in {"production", "staging"}

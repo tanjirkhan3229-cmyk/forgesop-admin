@@ -177,7 +177,20 @@ admin/           Vite + React 19 + TS + Tailwind operator SPA (English-only)
 - **Phase 5 — API health & over-request (deferred).** `api_request_metrics`,
   `rate_limit_events`, dashboards. **+ the sop-hub telemetry shim
   (touch-point #2).**
-- **Phase 6 — Billing-ready (optional).** Stripe webhook → `apply_plan`.
+- **Phase 6 — Billing-ready (optional).** ✅ shipped: `services/billing_service.py`
+  — `POST /v1/billing/webhook` (signature-verified with stdlib HMAC, the ONLY
+  unauthenticated route; a bad/replayed/unsigned payload → 400) maps a subscribed
+  `stripe_price_id → plans.key` and calls the EXISTING `plan_service.apply_plan`
+  (reconciliation unchanged — Stripe is just another `apply_plan` caller),
+  populating `workspace_plans.stripe_customer_id`/`stripe_subscription_id` and
+  auditing a Stripe-origin `billing.subscription.synced` event (actor
+  `stripe-webhook@forgesop.platform`); cancellation downgrades to `free`. Read-only
+  `GET /v1/billing/invoices` (gated `tenant.read`, audited as a sensitive read,
+  lazy-imports the `stripe` SDK + degrades to `[]` when unconfigured). `plans`
+  API now accepts `stripe_price_id` (the price→plan lookup key — does NOT affect
+  reconciliation). SPA workspace detail gains a read-only Invoices section. The
+  manual operator override path is retained. **No Alembic — all `stripe_*`
+  columns already exist from Phase 2.**
 - **Phase 7 — Alerts & digests.** `platform_settings`; threshold alerts + digest.
 
 ## Testing conventions

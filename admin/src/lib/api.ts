@@ -117,6 +117,24 @@ export interface PlanInput {
   is_public?: boolean
   sort_order?: number
   monthly_price_cents?: number | null
+  stripe_price_id?: string | null
+}
+
+export interface Invoice {
+  id: string | null
+  number: string | null
+  status: string | null
+  amount_due: number | null
+  amount_paid: number | null
+  currency: string | null
+  created: number | null // unix seconds
+  hosted_invoice_url: string | null
+  invoice_pdf: string | null
+}
+
+export interface WorkspaceInvoices {
+  customer_id: string | null
+  invoices: Invoice[]
 }
 
 export interface WorkspacePatch {
@@ -193,4 +211,6 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(body),
     }),
+  invoices: (workspaceId: string) =>
+    request<WorkspaceInvoices>(`/v1/billing/invoices${qs({ workspace_id: workspaceId })}`),
 }

@@ -36,6 +36,15 @@ export function useUsers(q: UserQuery) {
   return useQuery({ queryKey: ['users', q], queryFn: () => api.users(q) })
 }
 
+/** Read-only Stripe invoices for a workspace (by its linked customer). */
+export function useWorkspaceInvoices(id: string | null) {
+  return useQuery({
+    queryKey: ['invoices', id],
+    queryFn: () => api.invoices(id as string),
+    enabled: !!id,
+  })
+}
+
 export function usePlans() {
   return useQuery({ queryKey: ['plans'], queryFn: api.plans })
 }

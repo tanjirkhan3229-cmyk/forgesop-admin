@@ -14,8 +14,11 @@ never silently disables an enterprise-only flag. Column names are validated
 against the live `public.workspaces` columns (introspected) before being used
 in SQL, so the dynamic UPDATE is safe.
 
-The `stripe_*` columns on plans / workspace_plans are a billing-later seam and
-are never written here (they stay NULL).
+Billing seam: `plans.stripe_price_id` IS settable here (Phase 6) so the Stripe
+webhook can map a subscribed price → plan. It is purely a lookup key and does
+NOT affect reconciliation — `apply_plan` still writes only the feature_* columns
+a plan lists. The `workspace_plans.stripe_*` columns are populated exclusively by
+`billing_service` (from webhook events), never here.
 """
 
 from __future__ import annotations
@@ -159,7 +162,7 @@ async def create_plan(
             is_public=data.get("is_public", True),
             sort_order=data.get("sort_order", 0),
             monthly_price_cents=data.get("monthly_price_cents"),
-            # stripe_price_id intentionally not set — billing-later seam (NULL).
+            stripe_price_id=data.get("stripe_price_id"),  # Phase 6: price→plan key
             created_at=now,
             updated_at=now,
         )
@@ -193,6 +196,7 @@ async def update_plan(
             "is_public",
             "sort_order",
             "monthly_price_cents",
+            "stripe_price_id",
         )
         if k in data and data[k] is not None
     }

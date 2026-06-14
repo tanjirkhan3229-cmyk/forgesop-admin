@@ -1,8 +1,55 @@
 import { useState } from 'react'
 import { ArrowLeft, Search } from 'lucide-react'
 import { ConfirmModal } from '../components/ConfirmModal'
-import { usePatchWorkspace, usePlans, useWorkspace, useWorkspaces } from '../hooks/queries'
+import {
+  usePatchWorkspace,
+  usePlans,
+  useWorkspace,
+  useWorkspaceInvoices,
+  useWorkspaces,
+} from '../hooks/queries'
 import { formatDate, formatNumber, relativeTime } from '../lib/format'
+
+/** Stripe amounts are in the currency's minor unit (e.g. cents). */
+function formatMoney(amount: number | null, currency: string | null): string {
+  if (amount == null) return '—'
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: (currency ?? 'usd').toUpperCase(),
+    }).format(amount / 100)
+  } catch {
+    return `${(amount / 100).toFixed(2)} ${(currency ?? '').toUpperCase()}`
+  }
+}
+
+function formatUnix(seconds: number | null): string {
+  if (seconds == null) return '—'
+  return formatDate(new Date(seconds * 1000).toISOString())
+}
+
+/** Read-only Stripe invoices. Quiet when billing isn't wired up. */
+function Invoices({ workspaceId }: { workspaceId: string }) {
+  const { data, isLoading, error } = useWorkspaceInvoices(workspaceId)
+  if (isLoading) return <div className="text-sm text-slate-500">Loading invoices…</div>
+  if (error || !data) return <div className="text-sm text-slate-400">Invoices unavailable.</div>
+  if (!data.customer_id) {
+    return <div className="text-sm text-slate-400">No Stripe customer linked to this workspace.</div>
+  }
+  return (
+    <Table
+      headers={['Invoice', 'Status', 'Amount due', 'Amount paid', 'Date', 'Link']}
+      rows={data.invoices.map((inv) => [
+        inv.number ?? inv.id ?? '—',
+        inv.status ?? '—',
+        formatMoney(inv.amount_due, inv.currency),
+        formatMoney(inv.amount_paid, inv.currency),
+        formatUnix(inv.created),
+        inv.hosted_invoice_url ? 'view ↗' : '—',
+      ])}
+    />
+  )
+}
 
 type PendingAction =
   | { kind: 'plan'; plan_key: string }
@@ -127,6 +174,13 @@ function WorkspaceDetail({ id, onBack }: { id: string; onBack: () => void }) {
             relativeTime(a.timestamp), a.event_type ?? '—', a.action ?? '—', a.actor_email ?? '—',
           ])}
         />
+      </section>
+
+      <section>
+        <h3 className="mb-2 text-sm font-semibold text-slate-700">
+          Invoices <span className="font-normal text-slate-400">(read-only, from Stripe)</span>
+        </h3>
+        <Invoices workspaceId={id} />
       </section>
     </div>
   )
