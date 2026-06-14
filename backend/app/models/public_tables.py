@@ -16,6 +16,7 @@ the tenant by `organization_id`; it equals `workspaces.id`).
 from __future__ import annotations
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     Column,
     DateTime,
@@ -68,4 +69,58 @@ audit_trail = Table(
     Column("actor_email", Text),
     Column("actor_name", Text),
     Column("organization_id", GUID),  # == workspaces.id
+)
+
+# ── Module object tables (Phase 3 footprint adoption counts) ────────────────
+# We declare only `workspace_id` (+ the pk) because footprints only COUNT rows
+# per workspace. Names match sop-hub's live tables: `incidents` ships as
+# `ehs_incidents`; the rest are 1:1. All are keyed by `workspace_id` (unlike
+# audit_trail, which uses `organization_id`).
+
+sops = Table(
+    "sops",
+    public_metadata,
+    Column("id", GUID, primary_key=True),
+    Column("workspace_id", GUID),
+    Column("status", Text),
+    Column("created_at", DateTime(timezone=True)),
+)
+
+ehs_incidents = Table(
+    "ehs_incidents",
+    public_metadata,
+    Column("id", GUID, primary_key=True),
+    Column("workspace_id", GUID),
+    Column("status", Text),
+    Column("created_at", DateTime(timezone=True)),
+)
+
+capas = Table(
+    "capas",
+    public_metadata,
+    Column("id", GUID, primary_key=True),
+    Column("workspace_id", GUID),
+    Column("status", Text),
+    Column("created_at", DateTime(timezone=True)),
+)
+
+risks = Table(
+    "risks",
+    public_metadata,
+    Column("id", GUID, primary_key=True),
+    Column("workspace_id", GUID),
+    Column("status", Text),
+    Column("created_at", DateTime(timezone=True)),
+)
+
+# Storage source. document_versions.size_bytes is the canonical per-file byte
+# count; footprints sum it per workspace. (Other *_attachments tables also carry
+# size_bytes; document_versions is the dominant store and the one we sum here.)
+document_versions = Table(
+    "document_versions",
+    public_metadata,
+    Column("id", GUID, primary_key=True),
+    Column("workspace_id", GUID),
+    Column("size_bytes", BigInteger),
+    Column("uploaded_at", DateTime(timezone=True)),
 )

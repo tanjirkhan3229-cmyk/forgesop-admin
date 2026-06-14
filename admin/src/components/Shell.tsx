@@ -1,5 +1,15 @@
 import { useState, type ComponentType } from 'react'
-import { Building2, CreditCard, Gauge, LineChart, LogOut, Users as UsersIcon } from 'lucide-react'
+import {
+  Activity,
+  Building2,
+  CreditCard,
+  Gauge,
+  GaugeCircle,
+  HeartPulse,
+  LineChart,
+  LogOut,
+  Users as UsersIcon,
+} from 'lucide-react'
 import type { Me } from '../lib/api'
 import { logout } from '../lib/auth'
 import { Overview } from '../pages/Overview'
@@ -7,8 +17,19 @@ import { Signups } from '../pages/Signups'
 import { Workspaces } from '../pages/Workspaces'
 import { Users } from '../pages/Users'
 import { Plans } from '../pages/Plans'
+import { Footprints } from '../pages/Footprints'
+import { Health } from '../pages/Health'
+import { ApiMetrics } from '../pages/ApiMetrics'
 
-type PageKey = 'overview' | 'signups' | 'workspaces' | 'users' | 'plans'
+type PageKey =
+  | 'overview'
+  | 'signups'
+  | 'workspaces'
+  | 'users'
+  | 'plans'
+  | 'footprints'
+  | 'health'
+  | 'apimetrics'
 
 const NAV: { key: PageKey; label: string; icon: typeof Gauge }[] = [
   { key: 'overview', label: 'Overview', icon: Gauge },
@@ -16,6 +37,9 @@ const NAV: { key: PageKey; label: string; icon: typeof Gauge }[] = [
   { key: 'workspaces', label: 'Workspaces', icon: Building2 },
   { key: 'users', label: 'Users', icon: UsersIcon },
   { key: 'plans', label: 'Plans', icon: CreditCard },
+  { key: 'footprints', label: 'Footprints', icon: Activity },
+  { key: 'health', label: 'Health', icon: HeartPulse },
+  { key: 'apimetrics', label: 'API Metrics', icon: GaugeCircle },
 ]
 
 const PAGES: Record<PageKey, ComponentType> = {
@@ -24,6 +48,9 @@ const PAGES: Record<PageKey, ComponentType> = {
   workspaces: Workspaces,
   users: Users,
   plans: Plans,
+  footprints: Footprints,
+  health: Health,
+  apimetrics: ApiMetrics,
 }
 
 /** Authed layout — sidebar nav + header + the active read-only page. */

@@ -1,25 +1,19 @@
-# ── secrets ──────────────────────────────────────────────────────────
-.env
-.env.*
-!.env.example
-*.pem
-
-# ── python ───────────────────────────────────────────────────────────
 __pycache__/
-*.py[cod]
-backend/venv/
-.venv/
+*.pyc
 .pytest_cache/
-*.egg-info/
-
-# ── node / vite ──────────────────────────────────────────────────────
+.venv/
+venv/
+env/
 node_modules/
-admin/dist/
-admin/.vite/
-
-# ── misc ─────────────────────────────────────────────────────────────
+dist/
+build/
 .DS_Store
-*.log
-
-# Harness session dir (lives in the repo root since the move)
-.claude/
+*.db
+.env
+.env.local
+frontend/node_modules/
+frontend/dist/
+*.egg-info/
+.coverage
+htmlcov/
+*.tsbuildinfo

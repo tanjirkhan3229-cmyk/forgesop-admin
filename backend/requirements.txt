@@ -10,9 +10,11 @@ pydantic>=2.6
 pydantic-settings>=2.2
 email-validator>=2.0     # pydantic EmailStr
 PyJWT[crypto]>=2.8       # operator-token (RS256/ES256) verification
+celery>=5.3              # admin-side worker + beat (footprint + metrics rollups)
+redis>=5.0               # Celery broker + the SHARED metrics Redis the rollup drains
+httpx>=0.27              # /v1/health probes the main app's /ready (+ tests)
 
 # ── tests ────────────────────────────────────────────────────────────
 pytest>=8.0
 pytest-asyncio>=0.23
-httpx>=0.27
 aiosqlite>=0.20          # in-memory DB for the test-suite
