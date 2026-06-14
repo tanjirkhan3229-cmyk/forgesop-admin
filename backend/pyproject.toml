@@ -1,0 +1,13 @@
+[project]
+name = "forgesop-admin-backend"
+version = "0.1.0"
+description = "ForgeSOP Platform Admin Console — standalone cross-tenant operator API"
+requires-python = ">=3.9"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.setuptools]
+packages = ["app"]
