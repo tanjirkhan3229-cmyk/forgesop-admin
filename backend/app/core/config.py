@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     SUPABASE_URL: Optional[str] = None
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
 
+    # Verify the DB server's TLS cert against a CA. Default ON (secure). The
+    # Supabase *pooler* presents a self-signed cert chain, so set this False to
+    # connect (still encrypted, just not CA-verified). To "tighten later":
+    # download Supabase's CA cert and re-enable verification.
+    DB_SSL_VERIFY: bool = True
+
     # ── Operator identity (distinct issuer/audience from the tenant project) ─
     # A tenant Supabase JWT must NEVER satisfy the platform gate, so the
     # operator IdP uses its own issuer + audience + JWKS. verify_platform_token
