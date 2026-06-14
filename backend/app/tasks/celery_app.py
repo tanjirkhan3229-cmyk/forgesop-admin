@@ -18,7 +18,7 @@ celery_app = Celery(
     "forgesop_admin",
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
-    include=["app.tasks.footprint_tasks"],
+    include=["app.tasks.footprint_tasks", "app.tasks.metrics_tasks"],
 )
 
 celery_app.conf.update(
@@ -40,6 +40,13 @@ celery_app.conf.beat_schedule = {
     "signup-funnel-rollup-daily": {
         "task": "footprint.signup_funnel_rollup",
         "schedule": crontab(hour=0, minute=30),
+    },
+    # Phase 5: drain the shared Redis API-telemetry buckets every 60s. Frequent
+    # + idempotent (only completed minutes are drained); keeps the dashboards and
+    # the /v1/health rollup-freshness signal current.
+    "platform-metrics-rollup-60s": {
+        "task": "metrics.platform_metrics_rollup",
+        "schedule": 60.0,
     },
 }
 

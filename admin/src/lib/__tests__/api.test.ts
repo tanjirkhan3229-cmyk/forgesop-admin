@@ -107,4 +107,37 @@ describe('api client', () => {
     expect(res.workspace_id).toBe('w1')
     expect(fetchMock.mock.calls[0][0]).toContain('/v1/footprints/w1')
   })
+
+  it('fetches composed platform health', async () => {
+    setToken('t')
+    const fetchMock = mockFetch(200, {
+      status: 'ok',
+      main_app: { status: 'ready', checks: { postgres: { status: 'ok' } } },
+      rollup: { last_run: '2026-06-14T12:00:00Z', age_seconds: 12, stale: false },
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    const res = await api.health()
+    expect(res.status).toBe('ok')
+    expect(res.rollup.stale).toBe(false)
+    expect(fetchMock.mock.calls[0][0]).toContain('/v1/health')
+  })
+
+  it('builds the api-metrics query (range/route/workspace)', async () => {
+    setToken('t')
+    const fetchMock = mockFetch(200, { range: '24h', series: [], by_route: [] })
+    vi.stubGlobal('fetch', fetchMock)
+    await api.apiMetrics({ range: '24h', route: '/api/v1/x', workspace: 'ws-1' })
+    const url = fetchMock.mock.calls[0][0] as string
+    expect(url).toContain('/v1/metrics/api')
+    expect(url).toContain('range=24h')
+    expect(url).toContain('workspace=ws-1')
+  })
+
+  it('fetches rate-limit offenders for a range', async () => {
+    setToken('t')
+    const fetchMock = mockFetch(200, { range: '1h', total: 0, offenders: [], by_route: [], by_workspace: [] })
+    vi.stubGlobal('fetch', fetchMock)
+    await api.rateLimits('1h')
+    expect(fetchMock.mock.calls[0][0]).toContain('/v1/metrics/rate-limits?range=1h')
+  })
 })

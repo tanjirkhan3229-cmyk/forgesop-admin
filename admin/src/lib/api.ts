@@ -236,6 +236,64 @@ export interface UserQuery {
   page_size?: number
 }
 
+// ── Phase 5: API health & over-request telemetry ────────────────────────────
+
+export interface DepCheck {
+  status: string
+  detail?: string
+  [k: string]: unknown
+}
+
+export interface PlatformHealth {
+  status: 'ok' | 'degraded'
+  main_app: { status: string; http_status?: number; checks?: Record<string, DepCheck> | null; detail?: string }
+  rollup: { last_run: string | null; age_seconds: number | null; stale: boolean }
+}
+
+export interface ApiMetricPoint {
+  route: string
+  method: string
+  status_class: string
+  workspace_id: string | null
+  bucket_start: string | null
+  bucket_seconds: number
+  count: number
+  error_count: number
+  p50_ms: number
+  p95_ms: number
+  p99_ms: number
+}
+
+export interface ApiRouteSummary {
+  route: string
+  count: number
+  error_count: number
+  error_rate: number
+  p50_ms: number
+  p95_ms: number
+  p99_ms: number
+}
+
+export interface ApiMetrics {
+  range: string
+  series: ApiMetricPoint[]
+  by_route: ApiRouteSummary[]
+}
+
+export interface MetricsQuery {
+  range?: string
+  route?: string
+  workspace?: string
+}
+
+export interface RateLimitOffenders {
+  range: string
+  total: number
+  offenders: { route: string; workspace_id: string | null; count: number }[]
+  by_route: { route: string; count: number }[]
+  by_workspace: { workspace_id: string | null; count: number }[]
+}
+
 export const api = {
   me: () => request<Me>('/v1/me'),
   overview: () => request<Overview>('/v1/overview'),
@@ -262,4 +320,11 @@ export const api = {
       `/v1/footprints${qs({ ...q, over_seat_limit: q.over_seat_limit || undefined } as QueryParams)}`,
     ),
   footprint: (id: string) => request<FootprintDetail>(`/v1/footprints/${id}`),
+
+  // ── Phase 5: API health & over-request telemetry ─────────────────────────
+  health: () => request<PlatformHealth>('/v1/health'),
+  apiMetrics: (q: MetricsQuery = {}) =>
+    request<ApiMetrics>(`/v1/metrics/api${qs(q as QueryParams)}`),
+  rateLimits: (range = '1h') =>
+    request<RateLimitOffenders>(`/v1/metrics/rate-limits${qs({ range })}`),
 }

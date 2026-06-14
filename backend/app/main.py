@@ -11,7 +11,16 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import admins, footprints, me, overview, plans, users, workspaces
+from app.api.v1 import (
+    admins,
+    footprints,
+    me,
+    metrics,
+    overview,
+    plans,
+    users,
+    workspaces,
+)
 from app.core.config import settings
 
 app = FastAPI(
@@ -39,9 +48,12 @@ app.include_router(workspaces.router, prefix=API_V1)
 app.include_router(users.router, prefix=API_V1)
 app.include_router(plans.router, prefix=API_V1)
 app.include_router(footprints.router, prefix=API_V1)
+app.include_router(metrics.router, prefix=API_V1)
 
 
 @app.get("/health", tags=["health"])
 async def health() -> dict:
-    """Liveness stub (open). A real /ready probe is a Phase-5 concern."""
+    """Process liveness stub (open, unauthenticated). The composed operator
+    health probe — main-app /ready + telemetry-rollup freshness — is the
+    authenticated GET /v1/health (api/v1/metrics.py)."""
     return {"status": "ok"}

@@ -152,3 +152,41 @@ signup_events = Table(
     Column("utm", JSONB_T, default=dict),
     Column("plan_at_signup", Text),
 )
+
+# ── Phase 5 — API health & over-request telemetry ──────────────────────────
+
+# Per-(route, status class, minute) request rollup, drained from the SHARED
+# Redis `platform:metrics:*` counters + latency reservoirs the sop-hub telemetry
+# shim writes (touch-point #2). One row per completed minute bucket; percentiles
+# are computed from the reservoir at drain time. `workspace_id` is nullable
+# because the shim's per-route counters are not workspace-scoped.
+api_request_metrics = Table(
+    "api_request_metrics",
+    metadata,
+    Column("id", GUID, primary_key=True),
+    Column("route", Text, nullable=False),  # route TEMPLATE, never a raw URL
+    Column("method", Text, nullable=False),
+    Column("status_class", Text, nullable=False),  # 2xx/3xx/4xx/5xx
+    Column("workspace_id", GUID),
+    Column("bucket_start", DateTime(timezone=True), nullable=False),
+    Column("bucket_seconds", Integer, nullable=False, default=60),
+    Column("count", Integer, nullable=False, default=0),
+    Column("error_count", Integer, nullable=False, default=0),
+    Column("p50_ms", Integer, nullable=False, default=0),
+    Column("p95_ms", Integer, nullable=False, default=0),
+    Column("p99_ms", Integer, nullable=False, default=0),
+)
+
+# One row per rate-limit (429) event, drained from the shared Redis
+# `platform:ratelimit:events` list the shim LPUSHes per 429. Powers the
+# "which API / tenant is getting over-requested" offenders view.
+rate_limit_events = Table(
+    "rate_limit_events",
+    metadata,
+    Column("id", GUID, primary_key=True),
+    Column("ts", DateTime(timezone=True), nullable=False),
+    Column("rate_key", Text),       # user:<sub> or the client IP
+    Column("workspace_id", GUID),
+    Column("route", Text),          # route TEMPLATE
+    Column("limit_str", Text),      # the slowapi limit that tripped (e.g. "60/minute")
+)
