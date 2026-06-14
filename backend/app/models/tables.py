@@ -16,11 +16,15 @@ it is ATTACH-ed (see tests/conftest.py).
 from __future__ import annotations
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     Column,
+    Date,
     DateTime,
+    Float,
     Integer,
     MetaData,
+    Numeric,
     String,
     Table,
     Text,
@@ -32,6 +36,8 @@ from sqlalchemy.types import JSON
 GUID = String(36).with_variant(UUID(as_uuid=False), "postgresql")
 JSONB_T = JSON().with_variant(JSONB(), "postgresql")
 INET_T = String(45).with_variant(INET(), "postgresql")
+# numeric(6,2) on PG; a plain float on SQLite so test equality is exact.
+NUMERIC_T = Float().with_variant(Numeric(6, 2), "postgresql")
 
 metadata = MetaData(schema="platform")
 
@@ -102,4 +108,47 @@ workspace_plans = Table(
     Column("stripe_customer_id", Text),
     Column("stripe_subscription_id", Text),
     Column("updated_at", DateTime(timezone=True)),
+)
+
+# ── Phase 3 — Customer footprints ──────────────────────────────────────────
+
+# Daily per-workspace usage snapshot + engagement score, computed by the admin
+# service's own Celery (tasks/footprint_tasks.py) from public.* via the
+# service-role session. One row per (workspace_id, day); the rollup is
+# idempotent (re-running a day replaces its row). The seat *limit* is NOT stored
+# here — it lives on the plan and is joined in at read time so it stays current
+# (see footprint_service.list_footprints / the over-limit filter).
+customer_footprint_daily = Table(
+    "customer_footprint_daily",
+    metadata,
+    Column("workspace_id", GUID, primary_key=True),
+    Column("day", Date, primary_key=True),
+    Column("active_users_1d", Integer, nullable=False, default=0),
+    Column("active_users_7d", Integer, nullable=False, default=0),
+    Column("active_users_30d", Integer, nullable=False, default=0),
+    Column("sops_count", Integer, nullable=False, default=0),
+    Column("incidents_count", Integer, nullable=False, default=0),
+    Column("capas_count", Integer, nullable=False, default=0),
+    Column("risks_count", Integer, nullable=False, default=0),
+    Column("storage_bytes", BigInteger, nullable=False, default=0),
+    Column("seats_used", Integer, nullable=False, default=0),
+    Column("last_active_at", DateTime(timezone=True)),
+    Column("engagement_score", NUMERIC_T, nullable=False, default=0),
+)
+
+# Funnel / source capture. Basic signup counts still derive from
+# public.users.created_at (Phase 1 overview); this table records source/UTM/plan
+# context per signup so the funnel can be sliced later. The daily
+# signup_funnel_rollup task backfills one row per new user (idempotent by
+# user_id).
+signup_events = Table(
+    "signup_events",
+    metadata,
+    Column("id", GUID, primary_key=True),
+    Column("ts", DateTime(timezone=True), nullable=False),
+    Column("workspace_id", GUID),
+    Column("user_id", GUID),
+    Column("source", Text),
+    Column("utm", JSONB_T, default=dict),
+    Column("plan_at_signup", Text),
 )

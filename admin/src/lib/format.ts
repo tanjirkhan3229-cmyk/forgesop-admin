@@ -28,3 +28,13 @@ export function formatDate(iso: string | null): string {
   if (Number.isNaN(d.getTime())) return '—'
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
+
+/** Human byte size, e.g. 0 → "0 B", 1536 → "1.5 KB", 1073741824 → "1 GB". */
+export function formatBytes(bytes: number): string {
+  if (!bytes || bytes < 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+  const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)))
+  const value = bytes / 1024 ** i
+  const rounded = i === 0 ? value : Math.round(value * 10) / 10
+  return `${rounded} ${units[i]}`
+}

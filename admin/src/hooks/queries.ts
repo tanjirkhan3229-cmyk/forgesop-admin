@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   api,
+  type FootprintQuery,
   type PlanInput,
   type UserQuery,
   type WorkspacePatch,
@@ -34,6 +35,18 @@ export function useWorkspace(id: string | null) {
 
 export function useUsers(q: UserQuery) {
   return useQuery({ queryKey: ['users', q], queryFn: () => api.users(q) })
+}
+
+export function useFootprints(q: FootprintQuery) {
+  return useQuery({ queryKey: ['footprints', q], queryFn: () => api.footprints(q) })
+}
+
+export function useFootprint(id: string | null) {
+  return useQuery({
+    queryKey: ['footprint', id],
+    queryFn: () => api.footprint(id as string),
+    enabled: !!id,
+  })
 }
 
 export function usePlans() {

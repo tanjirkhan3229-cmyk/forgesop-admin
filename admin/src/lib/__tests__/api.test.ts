@@ -71,4 +71,40 @@ describe('api client', () => {
     expect(url).toContain('/v1/plans')
     expect((init as RequestInit).method).toBe('POST')
   })
+
+  it('builds the footprints filter query (over-limit + inactive)', async () => {
+    setToken('t')
+    const fetchMock = mockFetch(200, {
+      items: [], total: 0, page: 1, page_size: 50, sort: 'engagement_score', order: 'desc',
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await api.footprints({ over_seat_limit: true, inactive_days: 14, sort: 'seats_used' })
+    const url = fetchMock.mock.calls[0][0] as string
+    expect(url).toContain('/v1/footprints')
+    expect(url).toContain('over_seat_limit=true')
+    expect(url).toContain('inactive_days=14')
+    expect(url).toContain('sort=seats_used')
+  })
+
+  it('omits over_seat_limit from the URL when the chip is off', async () => {
+    setToken('t')
+    const fetchMock = mockFetch(200, {
+      items: [], total: 0, page: 1, page_size: 50, sort: 'engagement_score', order: 'desc',
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await api.footprints({ over_seat_limit: false })
+    expect(fetchMock.mock.calls[0][0] as string).not.toContain('over_seat_limit')
+  })
+
+  it('fetches a single tenant footprint detail', async () => {
+    setToken('t')
+    const fetchMock = mockFetch(200, { workspace_id: 'w1', name: 'Acme', trend: [], latest: null, seat_limit: 5 })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await api.footprint('w1')
+    expect(res.workspace_id).toBe('w1')
+    expect(fetchMock.mock.calls[0][0]).toContain('/v1/footprints/w1')
+  })
 })

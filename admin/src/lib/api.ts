@@ -125,9 +125,71 @@ export interface WorkspacePatch {
   limits?: Record<string, number | null>
 }
 
+export interface FootprintRow {
+  workspace_id: string
+  name: string | null
+  day: string
+  active_users_1d: number
+  active_users_7d: number
+  active_users_30d: number
+  sops_count: number
+  incidents_count: number
+  capas_count: number
+  risks_count: number
+  storage_bytes: number
+  seats_used: number
+  seat_limit: number | null
+  over_seat_limit: boolean
+  last_active_at: string | null
+  days_inactive: number | null
+  engagement_score: number
+}
+
+export interface FootprintDirectory {
+  items: FootprintRow[]
+  total: number
+  page: number
+  page_size: number
+  sort: string
+  order: string
+}
+
+export interface FootprintTrendPoint {
+  day: string
+  active_users_1d: number
+  active_users_7d: number
+  active_users_30d: number
+  sops_count: number
+  incidents_count: number
+  capas_count: number
+  risks_count: number
+  storage_bytes: number
+  seats_used: number
+  engagement_score: number
+}
+
+export interface FootprintDetail {
+  workspace_id: string
+  name: string | null
+  slug: string | null
+  seat_limit: number | null
+  latest: FootprintRow | null
+  trend: FootprintTrendPoint[]
+}
+
+export interface FootprintQuery {
+  search?: string
+  over_seat_limit?: boolean
+  inactive_days?: number
+  sort?: string
+  order?: 'asc' | 'desc'
+  page?: number
+  page_size?: number
+}
+
 export class AuthError extends Error {}
 
-type QueryParams = Record<string, string | number | undefined | null>
+type QueryParams = Record<string, string | number | boolean | undefined | null>
 
 function qs(params: QueryParams): string {
   const sp = new URLSearchParams()
@@ -193,4 +255,11 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(body),
     }),
+
+  footprints: (q: FootprintQuery = {}) =>
+    request<FootprintDirectory>(
+      // omit over_seat_limit when off so the URL stays clean
+      `/v1/footprints${qs({ ...q, over_seat_limit: q.over_seat_limit || undefined } as QueryParams)}`,
+    ),
+  footprint: (id: string) => request<FootprintDetail>(`/v1/footprints/${id}`),
 }

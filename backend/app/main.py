@@ -11,7 +11,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import admins, me, overview, plans, users, workspaces
+from app.api.v1 import admins, footprints, me, overview, plans, users, workspaces
 from app.core.config import settings
 
 app = FastAPI(
@@ -38,6 +38,7 @@ app.include_router(overview.router, prefix=API_V1)
 app.include_router(workspaces.router, prefix=API_V1)
 app.include_router(users.router, prefix=API_V1)
 app.include_router(plans.router, prefix=API_V1)
+app.include_router(footprints.router, prefix=API_V1)
 
 
 @app.get("/health", tags=["health"])
