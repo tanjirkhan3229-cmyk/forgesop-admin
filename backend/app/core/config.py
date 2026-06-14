@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     SUPABASE_URL: Optional[str] = None
     SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
 
+    # Verify the DB server's TLS cert against a CA. Default ON (secure). The
+    # Supabase *pooler* presents a self-signed cert chain, so set this False to
+    # connect (still encrypted, just not CA-verified). To "tighten later":
+    # download Supabase's CA cert and re-enable verification.
+    DB_SSL_VERIFY: bool = True
+
     # ── Operator identity (distinct issuer/audience from the tenant project) ─
     # A tenant Supabase JWT must NEVER satisfy the platform gate, so the
     # operator IdP uses its own issuer + audience + JWKS. verify_platform_token
@@ -42,8 +48,37 @@ class Settings(BaseSettings):
     PLATFORM_JWT_AUDIENCE: Optional[str] = None
     PLATFORM_JWKS_URL: Optional[str] = None
 
+    # ── Local operator auth (self-contained email+password) ──────────────────
+    # Alternative to an external IdP for small teams: the console stores PBKDF2
+    # password hashes and issues its own HS256 session tokens. When True,
+    # require_platform_admin verifies console session tokens instead of IdP JWTs.
+    # Less secure than SSO+MFA on a cross-tenant surface — intended as a
+    # bootstrap; migrate to an IdP for production hardening.
+    PLATFORM_LOCAL_AUTH: bool = False
+    # Server-only HS256 signing secret for console session tokens. REQUIRED when
+    # PLATFORM_LOCAL_AUTH is True. Never leaves this service.
+    PLATFORM_SESSION_SECRET: Optional[str] = None
+    PLATFORM_SESSION_TTL_HOURS: int = 12
+    # Optional: if set, the first-time set-password call must present this token
+    # (closes the first-login account-takeover window). Leave blank for the
+    # plain email→set-password flow.
+    PLATFORM_SETUP_TOKEN: Optional[str] = None
+
     # CORS — the admin SPA origin (e.g. https://admin.forgesop.app).
     ADMIN_ORIGIN: str = "http://localhost:5173"
+
+    # ── Stripe billing (Phase 6 — optional) ─────────────────────────────────
+    # Billing is OFF until both are set. The webhook verifies every payload's
+    # `Stripe-Signature` against STRIPE_WEBHOOK_SECRET (an absent secret means
+    # no event can be accepted), and the read-only invoices view calls the
+    # Stripe API with STRIPE_API_KEY. The key lives only in this service's
+    # environment — never in any browser, never logged. Stripe maps a
+    # subscribed `stripe_price_id → platform.plans.key` and the existing
+    # `plan_service.apply_plan` does the reconciliation, unchanged.
+    STRIPE_API_KEY: Optional[str] = None
+    STRIPE_WEBHOOK_SECRET: Optional[str] = None
+    # Reject events whose signature timestamp is older than this (replay guard).
+    STRIPE_WEBHOOK_TOLERANCE_SECONDS: int = 300
 
     # ── Celery / Redis (Phase 3) ─────────────────────────────────────────
     # The console runs its OWN Celery worker + beat against its OWN Redis
@@ -56,6 +91,10 @@ class Settings(BaseSettings):
     CELERY_DB_INDEX: int = 1
     CELERY_BROKER_URL: Optional[str] = None
     CELERY_RESULT_BACKEND: Optional[str] = None
+
+    # Phase 7 — alert sweep cadence (minutes) + daily digest hour (UTC).
+    ALERT_SWEEP_INTERVAL_MINUTES: int = 15
+    DIGEST_HOUR_UTC: int = 13
 
     # Footprints: how many trailing days of snapshots the detail trend returns.
     FOOTPRINT_TREND_DAYS: int = 30

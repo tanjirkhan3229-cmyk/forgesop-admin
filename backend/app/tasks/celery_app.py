@@ -18,7 +18,11 @@ celery_app = Celery(
     "forgesop_admin",
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
-    include=["app.tasks.footprint_tasks", "app.tasks.metrics_tasks"],
+    include=[
+        "app.tasks.footprint_tasks",
+        "app.tasks.metrics_tasks",
+        "app.tasks.alerts",
+    ],
 )
 
 celery_app.conf.update(
@@ -47,6 +51,16 @@ celery_app.conf.beat_schedule = {
     "platform-metrics-rollup-60s": {
         "task": "metrics.platform_metrics_rollup",
         "schedule": 60.0,
+    },
+    # Phase 7: alert sweeps every N minutes + the daily operator digest (the
+    # task honours the daily/weekly preference and only sends weekly on Mondays).
+    "run-alert-sweeps": {
+        "task": "app.tasks.alerts.run_alert_sweeps",
+        "schedule": crontab(minute=f"*/{max(1, settings.ALERT_SWEEP_INTERVAL_MINUTES)}"),
+    },
+    "send-operator-digest": {
+        "task": "app.tasks.alerts.send_operator_digest",
+        "schedule": crontab(minute=0, hour=settings.DIGEST_HOUR_UTC),
     },
 }
 

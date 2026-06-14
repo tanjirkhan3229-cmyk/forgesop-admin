@@ -1,8 +1,9 @@
 """
 /v1/plans — the plan catalog (gated `plans.manage`).
 
-A plan is a bundle of public.workspaces.feature_* booleans + soft limits; there
-is no billing. The `stripe_*` columns are never set here.
+A plan is a bundle of public.workspaces.feature_* booleans + soft limits.
+`stripe_price_id` (Phase 6) is an optional lookup key the Stripe webhook uses to
+map a subscribed price → this plan; it does not affect reconciliation.
 """
 
 from __future__ import annotations
@@ -35,6 +36,8 @@ class PlanCreate(BaseModel):
     is_public: bool = True
     sort_order: int = 0
     monthly_price_cents: Optional[int] = None
+    # Phase 6: the Stripe Price this plan maps to (webhook price→plan lookup key).
+    stripe_price_id: Optional[str] = None
 
 
 class PlanPatch(BaseModel):
@@ -45,6 +48,7 @@ class PlanPatch(BaseModel):
     is_public: Optional[bool] = None
     sort_order: Optional[int] = None
     monthly_price_cents: Optional[int] = None
+    stripe_price_id: Optional[str] = None
 
 
 @router.get("")

@@ -6,6 +6,7 @@ import {
   type FootprintQuery,
   type MetricsQuery,
   type PlanInput,
+  type SettingsPatch,
   type UserQuery,
   type WorkspacePatch,
   type WorkspaceQuery,
@@ -38,6 +39,15 @@ export function useUsers(q: UserQuery) {
   return useQuery({ queryKey: ['users', q], queryFn: () => api.users(q) })
 }
 
+/** Read-only Stripe invoices for a workspace (by its linked customer). */
+export function useWorkspaceInvoices(id: string | null) {
+  return useQuery({
+    queryKey: ['invoices', id],
+    queryFn: () => api.invoices(id as string),
+    enabled: !!id,
+  })
+}
+
 export function useFootprints(q: FootprintQuery) {
   return useQuery({ queryKey: ['footprints', q], queryFn: () => api.footprints(q) })
 }
@@ -47,6 +57,18 @@ export function useFootprint(id: string | null) {
     queryKey: ['footprint', id],
     queryFn: () => api.footprint(id as string),
     enabled: !!id,
+  })
+}
+
+export function useSettings() {
+  return useQuery({ queryKey: ['settings'], queryFn: api.settings })
+}
+
+export function useUpdateSettings() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (body: SettingsPatch) => api.updateSettings(body),
+    onSuccess: (data) => qc.setQueryData(['settings'], data),
   })
 }
 

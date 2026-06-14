@@ -1,8 +1,12 @@
 """platform: customer_footprint_daily + signup_events (Phase 3)
 
 Revision ID: 0003_footprints
-Revises: 0002_plans
+Revises: 0004_admin_passwords
 Create Date: 2026-06-14
+
+Note: re-parented onto 0004_admin_passwords during the Phase 6/7 merge to
+linearise two branches that both forked from 0002_plans (this repo's Alembic is
+a single linear history). Revision IDs are unchanged; only the order shifted.
 
 Adds the daily per-tenant footprint snapshot and the signup-funnel capture table
 to the `platform` schema. Populated by the admin service's own Celery beat
@@ -18,7 +22,7 @@ from __future__ import annotations
 from alembic import op
 
 revision = "0003_footprints"
-down_revision = "0002_plans"
+down_revision = "0004_admin_passwords"
 branch_labels = None
 depends_on = None
 

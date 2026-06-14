@@ -13,6 +13,7 @@ from app.tasks.celery_app import celery_app
 
 # Importing the tasks module registers the @celery_app.task functions and the
 # beat schedule onto celery_app.
+from app.tasks import alerts  # noqa: E402,F401
 from app.tasks import footprint_tasks  # noqa: E402,F401
 
 __all__ = ["celery_app"]

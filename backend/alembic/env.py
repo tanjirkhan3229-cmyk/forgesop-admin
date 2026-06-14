@@ -28,7 +28,10 @@ from app.core.config import settings
 from app.models.tables import metadata as target_metadata
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Escape '%' so ConfigParser doesn't treat URL-encoded chars in the password
+# (e.g. %2B, %23) as interpolation syntax. BasicInterpolation restores them on
+# read, so the engine still receives the correct URL.
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("%", "%%"))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -65,13 +68,29 @@ def do_run_migrations(connection: Connection) -> None:
 
 
 async def run_async_migrations() -> None:
+    # Supabase requires TLS; asyncpg does not enable it by default.
+    connect_args: dict = {}
+    if settings.DATABASE_URL.startswith("postgresql"):
+        import ssl
+
+        ctx = ssl.create_default_context()
+        if not settings.DB_SSL_VERIFY:
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+        connect_args["ssl"] = ctx
+
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=connect_args,
     )
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
+        # Explicitly commit: env.py runs CREATE SCHEMA before Alembic's own
+        # transaction, so without this the work sits in the connection's
+        # auto-begun transaction and SQLAlchemy 2.0 rolls it back on close.
+        await connection.commit()
     await connectable.dispose()
 
 

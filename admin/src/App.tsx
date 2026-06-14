@@ -24,11 +24,11 @@ export default function App() {
     if (meQuery.error instanceof AuthError) setHasToken(false)
   }, [meQuery.error])
 
-  if (!hasToken) return <Login />
+  if (!hasToken) return <Login onAuthenticated={() => setHasToken(true)} />
   if (meQuery.isLoading) {
     return <div className="p-6 text-sm text-slate-500">Loading operator session…</div>
   }
-  if (meQuery.error || !meQuery.data) return <Login />
+  if (meQuery.error || !meQuery.data) return <Login onAuthenticated={() => setHasToken(true)} />
 
   return <Shell me={meQuery.data} />
 }

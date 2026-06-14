@@ -117,12 +117,64 @@ export interface PlanInput {
   is_public?: boolean
   sort_order?: number
   monthly_price_cents?: number | null
+  stripe_price_id?: string | null
+}
+
+export interface Invoice {
+  id: string | null
+  number: string | null
+  status: string | null
+  amount_due: number | null
+  amount_paid: number | null
+  currency: string | null
+  created: number | null // unix seconds
+  hosted_invoice_url: string | null
+  invoice_pdf: string | null
+}
+
+export interface WorkspaceInvoices {
+  customer_id: string | null
+  invoices: Invoice[]
 }
 
 export interface WorkspacePatch {
   plan_key?: string
   flags?: Record<string, boolean>
   limits?: Record<string, number | null>
+}
+
+export interface AlertThresholds {
+  signup_drop_pct: number
+  signup_window_days: number
+  signup_min_baseline: number
+  over_seat_limit_enabled: boolean
+  error_rate_pct: number
+  alert_cooldown_hours: number
+}
+
+export interface DigestConfig {
+  enabled: boolean
+  frequency: 'daily' | 'weekly'
+}
+
+export interface PlatformSettings {
+  alert_thresholds: AlertThresholds
+  digest: DigestConfig
+  recipients: string[]
+}
+
+export interface SettingsPatch {
+  alert_thresholds?: Partial<AlertThresholds>
+  digest?: Partial<DigestConfig>
+  recipients?: string[]
+}
+
+export interface LoginResult {
+  status: 'ok' | 'password_set_required'
+  token?: string
+  token_type?: string
+  expires_in?: number
+  email?: string
 }
 
 export interface FootprintRow {
@@ -312,6 +364,24 @@ export const api = {
     request<WorkspaceDetail>(`/v1/workspaces/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(body),
+    }),
+  invoices: (workspaceId: string) =>
+    request<WorkspaceInvoices>(`/v1/billing/invoices${qs({ workspace_id: workspaceId })}`),
+
+  settings: () => request<PlatformSettings>('/v1/settings'),
+  updateSettings: (body: SettingsPatch) =>
+    request<PlatformSettings>('/v1/settings', { method: 'PUT', body: JSON.stringify(body) }),
+
+  // Local email+password auth (PLATFORM_LOCAL_AUTH mode). Unauthenticated.
+  authLogin: (email: string, password: string) =>
+    request<LoginResult>('/v1/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }),
+  authSetPassword: (email: string, password: string) =>
+    request<{ status: string }>('/v1/auth/set-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
     }),
 
   footprints: (q: FootprintQuery = {}) =>

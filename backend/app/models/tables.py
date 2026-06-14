@@ -50,6 +50,11 @@ platform_admins = Table(
     Column("email", Text, unique=True, nullable=False),
     Column("role", Text, nullable=False),  # CHECK enforced in migration DDL
     Column("is_active", Boolean, nullable=False, default=True),
+    # Local-auth (Phase: built-in password login). NULL password_hash = the
+    # operator hasn't set a password yet (first-login set-password flow). Unused
+    # when an external IdP is the auth source.
+    Column("password_hash", Text),
+    Column("password_set_at", DateTime(timezone=True)),
     Column("created_at", DateTime(timezone=True)),
     Column("updated_at", DateTime(timezone=True)),
 )
@@ -92,6 +97,18 @@ plans = Table(
     Column("stripe_price_id", Text),
     Column("monthly_price_cents", Integer),
     Column("created_at", DateTime(timezone=True)),
+    Column("updated_at", DateTime(timezone=True)),
+)
+
+# Operator-tunable settings (Phase 7): alert thresholds, digest config, and the
+# notification recipient list — one row per key, value is free-form jsonb. The
+# reserved `_alert_state` key holds internal alert-cooldown bookkeeping and is
+# never surfaced through the settings API.
+platform_settings = Table(
+    "platform_settings",
+    metadata,
+    Column("key", Text, primary_key=True),
+    Column("value", JSONB_T, nullable=False, default=dict),
     Column("updated_at", DateTime(timezone=True)),
 )
 

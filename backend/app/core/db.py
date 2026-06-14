@@ -25,9 +25,21 @@ from sqlalchemy.ext.asyncio import (
 from app.core.config import settings
 
 # search_path is set per-connection. asyncpg takes it via server_settings.
+# Supabase (and managed Postgres generally) require TLS, so we pass an SSL
+# context — asyncpg does NOT enable TLS by default. Verification follows
+# DB_SSL_VERIFY (off for the Supabase pooler's self-signed chain).
 _connect_args: dict = {}
 if settings.DATABASE_URL.startswith("postgresql"):
-    _connect_args = {"server_settings": {"search_path": "platform,public"}}
+    import ssl
+
+    _ssl_ctx = ssl.create_default_context()
+    if not settings.DB_SSL_VERIFY:
+        _ssl_ctx.check_hostname = False
+        _ssl_ctx.verify_mode = ssl.CERT_NONE
+    _connect_args = {
+        "server_settings": {"search_path": "platform,public"},
+        "ssl": _ssl_ctx,
+    }
 
 engine = create_async_engine(
     settings.DATABASE_URL,

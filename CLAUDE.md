@@ -177,8 +177,36 @@ admin/           Vite + React 19 + TS + Tailwind operator SPA (English-only)
 - **Phase 5 — API health & over-request (deferred).** `api_request_metrics`,
   `rate_limit_events`, dashboards. **+ the sop-hub telemetry shim
   (touch-point #2).**
-- **Phase 6 — Billing-ready (optional).** Stripe webhook → `apply_plan`.
-- **Phase 7 — Alerts & digests.** `platform_settings`; threshold alerts + digest.
+- **Phase 6 — Billing-ready (optional).** ✅ shipped: `services/billing_service.py`
+  — `POST /v1/billing/webhook` (signature-verified with stdlib HMAC, the ONLY
+  unauthenticated route; a bad/replayed/unsigned payload → 400) maps a subscribed
+  `stripe_price_id → plans.key` and calls the EXISTING `plan_service.apply_plan`
+  (reconciliation unchanged — Stripe is just another `apply_plan` caller),
+  populating `workspace_plans.stripe_customer_id`/`stripe_subscription_id` and
+  auditing a Stripe-origin `billing.subscription.synced` event (actor
+  `stripe-webhook@forgesop.platform`); cancellation downgrades to `free`. Read-only
+  `GET /v1/billing/invoices` (gated `tenant.read`, audited as a sensitive read,
+  lazy-imports the `stripe` SDK + degrades to `[]` when unconfigured). `plans`
+  API now accepts `stripe_price_id` (the price→plan lookup key — does NOT affect
+  reconciliation). SPA workspace detail gains a read-only Invoices section. The
+  manual operator override path is retained. **No Alembic — all `stripe_*`
+  columns already exist from Phase 2.**
+- **Phase 7 — Alerts & digests.** ✅ shipped: migration `0003_platform_settings`
+  (`platform.platform_settings` — one row per key, jsonb value; seeded defaults
+  from `services/settings_service.SETTINGS_DEFAULTS`, the shared source for
+  migration + tests). Introduces the admin service's OWN Celery + Redis
+  (`core/celery_app.py`; `tasks/alerts.py` — thin sync shims; the FastAPI process
+  never imports the broker). `services/alert_service.py` — pure `detect_alerts`
+  (signup-drop, over-seat-limit; error-rate-spike is Phase-5-guarded and skips
+  cleanly until `api_request_metrics` exists) + `run_sweeps` which dedups via a
+  cooldown in the reserved `_alert_state` key, emails via `services/notifier.py`
+  (the one monkeypatchable email seam), and audits `alert.fired`.
+  `services/digest_service.py` — pure `build_digest`/`render_*` + `send_digest`
+  (audits `digest.sent`). `GET/PUT /v1/settings` (gated `platform_settings.manage`,
+  deep-merge partial updates, audited; never exposes `_alert_state`). SPA Settings
+  page (thresholds + digest + recipients), nav gated on the capability. Beat:
+  alert sweep every N min + a daily digest task that honours the daily/weekly
+  preference.
 
 ## Testing conventions
 

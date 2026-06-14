@@ -8,6 +8,7 @@ import {
   HeartPulse,
   LineChart,
   LogOut,
+  Settings as SettingsIcon,
   Users as UsersIcon,
 } from 'lucide-react'
 import type { Me } from '../lib/api'
@@ -17,6 +18,7 @@ import { Signups } from '../pages/Signups'
 import { Workspaces } from '../pages/Workspaces'
 import { Users } from '../pages/Users'
 import { Plans } from '../pages/Plans'
+import { Settings } from '../pages/Settings'
 import { Footprints } from '../pages/Footprints'
 import { Health } from '../pages/Health'
 import { ApiMetrics } from '../pages/ApiMetrics'
@@ -30,8 +32,9 @@ type PageKey =
   | 'footprints'
   | 'health'
   | 'apimetrics'
+  | 'settings'
 
-const NAV: { key: PageKey; label: string; icon: typeof Gauge }[] = [
+const NAV: { key: PageKey; label: string; icon: typeof Gauge; capability?: string }[] = [
   { key: 'overview', label: 'Overview', icon: Gauge },
   { key: 'signups', label: 'Signups', icon: LineChart },
   { key: 'workspaces', label: 'Workspaces', icon: Building2 },
@@ -40,6 +43,8 @@ const NAV: { key: PageKey; label: string; icon: typeof Gauge }[] = [
   { key: 'footprints', label: 'Footprints', icon: Activity },
   { key: 'health', label: 'Health', icon: HeartPulse },
   { key: 'apimetrics', label: 'API Metrics', icon: GaugeCircle },
+  // Settings is PLATFORM_ADMIN-only; hide it for operators who can't manage it.
+  { key: 'settings', label: 'Settings', icon: SettingsIcon, capability: 'platform_settings.manage' },
 ]
 
 const PAGES: Record<PageKey, ComponentType> = {
@@ -51,19 +56,21 @@ const PAGES: Record<PageKey, ComponentType> = {
   footprints: Footprints,
   health: Health,
   apimetrics: ApiMetrics,
+  settings: Settings,
 }
 
 /** Authed layout — sidebar nav + header + the active read-only page. */
 export function Shell({ me }: { me: Me }) {
   const [page, setPage] = useState<PageKey>('overview')
   const Page = PAGES[page]
+  const nav = NAV.filter((n) => !n.capability || me.capabilities.includes(n.capability))
 
   return (
     <div className="flex min-h-screen">
       <aside className="flex w-56 flex-col border-r border-slate-200 bg-white">
         <div className="px-4 py-4 font-semibold text-brand-700">ForgeSOP Admin</div>
         <nav className="flex-1 space-y-1 px-2">
-          {NAV.map(({ key, label, icon: Icon }) => (
+          {nav.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => setPage(key)}

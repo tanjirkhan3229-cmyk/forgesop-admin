@@ -13,11 +13,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1 import (
     admins,
+    auth,
+    billing,
     footprints,
     me,
     metrics,
     overview,
     plans,
+    settings as settings_api,
     users,
     workspaces,
 )
@@ -41,12 +44,15 @@ app.add_middleware(
 )
 
 API_V1 = "/v1"
+app.include_router(auth.router, prefix=API_V1)
 app.include_router(me.router, prefix=API_V1)
 app.include_router(admins.router, prefix=API_V1)
 app.include_router(overview.router, prefix=API_V1)
 app.include_router(workspaces.router, prefix=API_V1)
 app.include_router(users.router, prefix=API_V1)
 app.include_router(plans.router, prefix=API_V1)
+app.include_router(billing.router, prefix=API_V1)
+app.include_router(settings_api.router, prefix=API_V1)
 app.include_router(footprints.router, prefix=API_V1)
 app.include_router(metrics.router, prefix=API_V1)
 
