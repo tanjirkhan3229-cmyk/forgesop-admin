@@ -11,6 +11,12 @@ export default defineConfig({
             '/v1': { target: 'http://localhost:8000', changeOrigin: true },
         },
     },
+    // Railway serves the built SPA with `vite preview` behind a *.up.railway.app
+    // (or custom) domain. Allow it through Vite's host check.
+    preview: {
+        host: true,
+        allowedHosts: true,
+    },
     test: {
         environment: 'jsdom',
         globals: true,

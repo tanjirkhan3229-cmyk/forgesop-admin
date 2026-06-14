@@ -35,9 +35,13 @@ app = FastAPI(
     openapi_url=None if settings.is_production else "/openapi.json",
 )
 
+# ADMIN_ORIGIN may be a comma-separated list (e.g. the custom UI domain plus a
+# Railway-provided fallback) so the SPA works from either origin.
+_admin_origins = [o.strip() for o in settings.ADMIN_ORIGIN.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.ADMIN_ORIGIN],
+    allow_origins=_admin_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
