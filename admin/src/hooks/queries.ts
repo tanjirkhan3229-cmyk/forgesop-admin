@@ -3,6 +3,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   api,
+  type FootprintQuery,
+  type MetricsQuery,
   type PlanInput,
   type SettingsPatch,
   type UserQuery,
@@ -42,6 +44,18 @@ export function useWorkspaceInvoices(id: string | null) {
   return useQuery({
     queryKey: ['invoices', id],
     queryFn: () => api.invoices(id as string),
+    enabled: !!id,
+  })
+}
+
+export function useFootprints(q: FootprintQuery) {
+  return useQuery({ queryKey: ['footprints', q], queryFn: () => api.footprints(q) })
+}
+
+export function useFootprint(id: string | null) {
+  return useQuery({
+    queryKey: ['footprint', id],
+    queryFn: () => api.footprint(id as string),
     enabled: !!id,
   })
 }
@@ -89,4 +103,19 @@ export function usePatchWorkspace(id: string) {
       qc.invalidateQueries({ queryKey: ['workspaces'] })
     },
   })
+}
+
+// ── Phase 5: API health & over-request telemetry ────────────────────────────
+
+export function useHealth() {
+  // Poll every 30s so the dependency lights + rollup freshness stay live.
+  return useQuery({ queryKey: ['health'], queryFn: api.health, refetchInterval: 30_000 })
+}
+
+export function useApiMetrics(q: MetricsQuery) {
+  return useQuery({ queryKey: ['api-metrics', q], queryFn: () => api.apiMetrics(q) })
+}
+
+export function useRateLimits(range: string) {
+  return useQuery({ queryKey: ['rate-limits', range], queryFn: () => api.rateLimits(range) })
 }

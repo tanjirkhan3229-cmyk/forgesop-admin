@@ -15,7 +15,9 @@ from app.api.v1 import (
     admins,
     auth,
     billing,
+    footprints,
     me,
+    metrics,
     overview,
     plans,
     settings as settings_api,
@@ -51,9 +53,13 @@ app.include_router(users.router, prefix=API_V1)
 app.include_router(plans.router, prefix=API_V1)
 app.include_router(billing.router, prefix=API_V1)
 app.include_router(settings_api.router, prefix=API_V1)
+app.include_router(footprints.router, prefix=API_V1)
+app.include_router(metrics.router, prefix=API_V1)
 
 
 @app.get("/health", tags=["health"])
 async def health() -> dict:
-    """Liveness stub (open). A real /ready probe is a Phase-5 concern."""
+    """Process liveness stub (open, unauthenticated). The composed operator
+    health probe — main-app /ready + telemetry-rollup freshness — is the
+    authenticated GET /v1/health (api/v1/metrics.py)."""
     return {"status": "ok"}

@@ -13,7 +13,7 @@ import asyncio
 import logging
 from datetime import datetime, timezone
 
-from app.core.celery_app import celery
+from app.tasks.celery_app import celery_app as celery
 from app.core.db import SessionLocal
 from app.services import alert_service, digest_service, settings_service
 

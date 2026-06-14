@@ -1,8 +1,11 @@
 import { useState, type ComponentType } from 'react'
 import {
+  Activity,
   Building2,
   CreditCard,
   Gauge,
+  GaugeCircle,
+  HeartPulse,
   LineChart,
   LogOut,
   Settings as SettingsIcon,
@@ -16,8 +19,20 @@ import { Workspaces } from '../pages/Workspaces'
 import { Users } from '../pages/Users'
 import { Plans } from '../pages/Plans'
 import { Settings } from '../pages/Settings'
+import { Footprints } from '../pages/Footprints'
+import { Health } from '../pages/Health'
+import { ApiMetrics } from '../pages/ApiMetrics'
 
-type PageKey = 'overview' | 'signups' | 'workspaces' | 'users' | 'plans' | 'settings'
+type PageKey =
+  | 'overview'
+  | 'signups'
+  | 'workspaces'
+  | 'users'
+  | 'plans'
+  | 'footprints'
+  | 'health'
+  | 'apimetrics'
+  | 'settings'
 
 const NAV: { key: PageKey; label: string; icon: typeof Gauge; capability?: string }[] = [
   { key: 'overview', label: 'Overview', icon: Gauge },
@@ -25,6 +40,9 @@ const NAV: { key: PageKey; label: string; icon: typeof Gauge; capability?: strin
   { key: 'workspaces', label: 'Workspaces', icon: Building2 },
   { key: 'users', label: 'Users', icon: UsersIcon },
   { key: 'plans', label: 'Plans', icon: CreditCard },
+  { key: 'footprints', label: 'Footprints', icon: Activity },
+  { key: 'health', label: 'Health', icon: HeartPulse },
+  { key: 'apimetrics', label: 'API Metrics', icon: GaugeCircle },
   // Settings is PLATFORM_ADMIN-only; hide it for operators who can't manage it.
   { key: 'settings', label: 'Settings', icon: SettingsIcon, capability: 'platform_settings.manage' },
 ]
@@ -35,6 +53,9 @@ const PAGES: Record<PageKey, ComponentType> = {
   workspaces: Workspaces,
   users: Users,
   plans: Plans,
+  footprints: Footprints,
+  health: Health,
+  apimetrics: ApiMetrics,
   settings: Settings,
 }
 

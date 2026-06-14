@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatDate, formatNumber, relativeTime } from '../format'
+import { formatBytes, formatDate, formatNumber, relativeTime } from '../format'
 
 describe('formatNumber', () => {
   it('groups thousands', () => {
@@ -25,5 +25,15 @@ describe('formatDate', () => {
   it('handles null and bad input', () => {
     expect(formatDate(null)).toBe('—')
     expect(formatDate('not-a-date')).toBe('—')
+  })
+})
+
+describe('formatBytes', () => {
+  it('scales to human units', () => {
+    expect(formatBytes(0)).toBe('0 B')
+    expect(formatBytes(512)).toBe('512 B')
+    expect(formatBytes(1536)).toBe('1.5 KB')
+    expect(formatBytes(1024 * 1024)).toBe('1 MB')
+    expect(formatBytes(1024 ** 3)).toBe('1 GB')
   })
 })
