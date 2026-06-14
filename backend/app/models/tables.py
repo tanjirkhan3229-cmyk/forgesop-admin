@@ -44,6 +44,11 @@ platform_admins = Table(
     Column("email", Text, unique=True, nullable=False),
     Column("role", Text, nullable=False),  # CHECK enforced in migration DDL
     Column("is_active", Boolean, nullable=False, default=True),
+    # Local-auth (Phase: built-in password login). NULL password_hash = the
+    # operator hasn't set a password yet (first-login set-password flow). Unused
+    # when an external IdP is the auth source.
+    Column("password_hash", Text),
+    Column("password_set_at", DateTime(timezone=True)),
     Column("created_at", DateTime(timezone=True)),
     Column("updated_at", DateTime(timezone=True)),
 )

@@ -125,4 +125,36 @@ describe('api client', () => {
       recipients: ['ops@forgesop.app'],
     })
   })
+
+  it('logs in with email+password and returns a token', async () => {
+    const fetchMock = mockFetch(200, { status: 'ok', token: 'sess.jwt', token_type: 'bearer' })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await api.authLogin('tanjir.khan3229@gmail.com', 'pw')
+    expect(res.status).toBe('ok')
+    expect(res.token).toBe('sess.jwt')
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toContain('/v1/auth/login')
+    expect((init as RequestInit).method).toBe('POST')
+    expect(JSON.parse((init as RequestInit).body as string)).toEqual({
+      email: 'tanjir.khan3229@gmail.com',
+      password: 'pw',
+    })
+  })
+
+  it('signals when first-login password set is required', async () => {
+    const fetchMock = mockFetch(200, { status: 'password_set_required' })
+    vi.stubGlobal('fetch', fetchMock)
+    const res = await api.authLogin('new@forgesop.com', '')
+    expect(res.status).toBe('password_set_required')
+  })
+
+  it('POSTs a first-login password set', async () => {
+    const fetchMock = mockFetch(200, { status: 'ok' })
+    vi.stubGlobal('fetch', fetchMock)
+    await api.authSetPassword('new@forgesop.com', 'a-strong-password')
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toContain('/v1/auth/set-password')
+    expect((init as RequestInit).method).toBe('POST')
+  })
 })

@@ -48,6 +48,22 @@ class Settings(BaseSettings):
     PLATFORM_JWT_AUDIENCE: Optional[str] = None
     PLATFORM_JWKS_URL: Optional[str] = None
 
+    # ── Local operator auth (self-contained email+password) ──────────────────
+    # Alternative to an external IdP for small teams: the console stores PBKDF2
+    # password hashes and issues its own HS256 session tokens. When True,
+    # require_platform_admin verifies console session tokens instead of IdP JWTs.
+    # Less secure than SSO+MFA on a cross-tenant surface — intended as a
+    # bootstrap; migrate to an IdP for production hardening.
+    PLATFORM_LOCAL_AUTH: bool = False
+    # Server-only HS256 signing secret for console session tokens. REQUIRED when
+    # PLATFORM_LOCAL_AUTH is True. Never leaves this service.
+    PLATFORM_SESSION_SECRET: Optional[str] = None
+    PLATFORM_SESSION_TTL_HOURS: int = 12
+    # Optional: if set, the first-time set-password call must present this token
+    # (closes the first-login account-takeover window). Leave blank for the
+    # plain email→set-password flow.
+    PLATFORM_SETUP_TOKEN: Optional[str] = None
+
     # CORS — the admin SPA origin (e.g. https://admin.forgesop.app).
     ADMIN_ORIGIN: str = "http://localhost:5173"
 

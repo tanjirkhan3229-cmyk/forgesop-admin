@@ -169,6 +169,14 @@ export interface SettingsPatch {
   recipients?: string[]
 }
 
+export interface LoginResult {
+  status: 'ok' | 'password_set_required'
+  token?: string
+  token_type?: string
+  expires_in?: number
+  email?: string
+}
+
 export class AuthError extends Error {}
 
 type QueryParams = Record<string, string | number | undefined | null>
@@ -243,4 +251,16 @@ export const api = {
   settings: () => request<PlatformSettings>('/v1/settings'),
   updateSettings: (body: SettingsPatch) =>
     request<PlatformSettings>('/v1/settings', { method: 'PUT', body: JSON.stringify(body) }),
+
+  // Local email+password auth (PLATFORM_LOCAL_AUTH mode). Unauthenticated.
+  authLogin: (email: string, password: string) =>
+    request<LoginResult>('/v1/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }),
+  authSetPassword: (email: string, password: string) =>
+    request<{ status: string }>('/v1/auth/set-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }),
 }

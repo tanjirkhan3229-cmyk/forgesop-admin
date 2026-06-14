@@ -73,6 +73,9 @@ def _configure_settings(monkeypatch):
     monkeypatch.setattr(app_settings, "PLATFORM_JWT_ISSUER", PLATFORM_ISSUER)
     monkeypatch.setattr(app_settings, "PLATFORM_JWT_AUDIENCE", PLATFORM_AUDIENCE)
     monkeypatch.setattr(app_settings, "PLATFORM_JWKS_URL", "https://stub/jwks.json")
+    # Default to the IdP path so a local .env (PLATFORM_LOCAL_AUTH=true) never
+    # bleeds into the suite; test_local_auth flips this on explicitly.
+    monkeypatch.setattr(app_settings, "PLATFORM_LOCAL_AUTH", False)
 
     import app.core.platform_auth as platform_auth
 

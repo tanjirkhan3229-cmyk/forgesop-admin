@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1 import (
     admins,
+    auth,
     billing,
     me,
     overview,
@@ -41,6 +42,7 @@ app.add_middleware(
 )
 
 API_V1 = "/v1"
+app.include_router(auth.router, prefix=API_V1)
 app.include_router(me.router, prefix=API_V1)
 app.include_router(admins.router, prefix=API_V1)
 app.include_router(overview.router, prefix=API_V1)

@@ -134,7 +134,14 @@ async def require_platform_admin(
         raise _FORBIDDEN
 
     try:
-        claims = verify_platform_token(credentials.credentials)
+        if settings.PLATFORM_LOCAL_AUTH:
+            # Self-contained email+password mode: verify the console's own
+            # session token (HS256, server-only secret) instead of an IdP JWT.
+            from app.services import auth_service
+
+            claims = auth_service.verify_session_token(credentials.credentials)
+        else:
+            claims = verify_platform_token(credentials.credentials)
     except InvalidTokenError as exc:
         logger.warning("platform token rejected: %s", exc)
         raise _FORBIDDEN
