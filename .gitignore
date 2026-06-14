@@ -20,3 +20,6 @@ admin/.vite/
 # ── misc ─────────────────────────────────────────────────────────────
 .DS_Store
 *.log
+
+# Harness session dir (lives in the repo root since the move)
+.claude/
